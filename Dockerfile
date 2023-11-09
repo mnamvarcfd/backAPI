@@ -10,18 +10,17 @@ COPY ./app /app
 WORKDIR /app
 EXPOSE 8000
 
-ARG DEV=alse
-RUN python -m venv /py \
-    && /py/bin/pip install --upgrade pip \
-    && /py/bin/pip install -r /tmp/requirements.txt \
-    && if [$DEV = "true"]; \
-        then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
-       fi \
-    && rm -rf /tmp \
-    && adduser \
-       --disabled-password \
-       --no-create-home \
-       django-user
+ARG DEV=false
+RUN python -m venv /py
+RUN /py/bin/pip install --upgrade pip
+RUN apk add --update --no-cache postgresql-client postgresql-dev build-base
+RUN apk add --update --no-cache --virtual .tmp-build-deps
+RUN /py/bin/pip install -r /tmp/requirements.txt
+RUN if [ "$DEV" = "true" ]; then /py/bin/pip install -r /tmp/requirements.dev.txt; fi
+RUN rm -rf /tmp
+RUN apk del .tmp-build-deps
+RUN adduser --disabled-password --no-create-home django-user
+
 
 
 ENV PATH="/py/bin:$PATH"
